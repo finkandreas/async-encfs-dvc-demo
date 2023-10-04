@@ -1,0 +1,20 @@
+schema: '2.0'
+stages:
+  in_original_fetch_cifar10_23-10-04_15-39-41_daint101_lukasd:
+    cmd: 'dvc_cmd in_original_fetch_cifar10_23-10-04_15-39-41_daint101_lukasd slurm_enqueue.sh
+      in_original_fetch_cifar10_23-10-04_15-39-41_daint101_lukasd dvc_app.yaml fetch_cifar10
+      encfs_mount_and_run ../../../../encrypt /tmp/encfs_25680_async_encfs_dvc_in_original_fetch_cifar10_23-10-04_15-39-41_daint101_lukasd_9127b8ee0785_3c19d5f6b8ec
+      ../../../../../../../../../../../../tmp/encfs_25680_async_encfs_dvc_in_original_fetch_cifar10_23-10-04_15-39-41_daint101_lukasd_9127b8ee0785_3c19d5f6b8ec/in/cifar10/original/output/encfs_out_{MPI_RANK}.log
+      bash -c "$(git rev-parse --show-toplevel)/examples/ex_in/fetch_cifar10.py --in-output
+      /tmp/encfs_25680_async_encfs_dvc_in_original_fetch_cifar10_23-10-04_15-39-41_daint101_lukasd_9127b8ee0785_3c19d5f6b8ec/in/cifar10/original/output" '
+    outs:
+    - path: ../../../../encrypt/in/cifar10/original/output
+      hash: md5
+      md5: e90b98b363b98e717a47c5f6ce23cd04.dir
+      size: 356719350
+      nfiles: 10
+    - path: output
+      hash: md5
+      md5: 07893f22ff2b7cca33ce4a4fe0cb7b88.dir
+      size: 3135
+      nfiles: 2
