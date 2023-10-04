@@ -1,0 +1,23 @@
+stages:
+  ex_vit_cifar10_baseline_model_training_run_20231004_164512:
+    desc: Generated with ../../dvc-demo.venv/bin/dvc_create_stage --app-yaml ../../ex_vit/dvc_app.yaml
+      --stage training --run-label run_20231004_164512 --input-config default --input-config-file
+      config.yaml --input-training . --input-test . at commit feb328e58deb7ce828fb5d0bd6ae74f123d1fdd6
+    cmd: 'dvc_cmd ex_vit_cifar10_baseline_model_training_run_20231004_164512 slurm_enqueue.sh
+      ex_vit_cifar10_baseline_model_training_run_20231004_164512 dvc_app.yaml training
+      encfs_mount_and_run ../../../../../../encrypt /tmp/encfs_24464_async_encfs_dvc_ex_vit_cifar10_baseline_model_training_run_20231004_164512_9d606ab2c382_2f88505aae0b
+      ../../../../../../../../../../../../../../tmp/encfs_24464_async_encfs_dvc_ex_vit_cifar10_baseline_model_training_run_20231004_164512_9d606ab2c382_2f88505aae0b/ex_vit/cifar10/baseline_model/training/run_20231004_164512/output/encfs_out_{MPI_RANK}.log
+      bash -c "$(git rev-parse --show-toplevel)/examples/ex_vit/training.py --training-input
+      /tmp/encfs_24464_async_encfs_dvc_ex_vit_cifar10_baseline_model_training_run_20231004_164512_9d606ab2c382_2f88505aae0b/in/cifar10/original/output
+      --test-input /tmp/encfs_24464_async_encfs_dvc_ex_vit_cifar10_baseline_model_training_run_20231004_164512_9d606ab2c382_2f88505aae0b/in/cifar10/original/output
+      --config /tmp/encfs_24464_async_encfs_dvc_ex_vit_cifar10_baseline_model_training_run_20231004_164512_9d606ab2c382_2f88505aae0b/ex_vit/cifar10/baseline_model/config/default/output/config.yaml
+      --training-output /tmp/encfs_24464_async_encfs_dvc_ex_vit_cifar10_baseline_model_training_run_20231004_164512_9d606ab2c382_2f88505aae0b/ex_vit/cifar10/baseline_model/training/run_20231004_164512/output
+      --dist --dry-run" '
+    deps:
+    - ../../../../../../encrypt/ex_vit/cifar10/baseline_model/config/default/output
+    - ../../../../../../encrypt/in/cifar10/original/output
+    outs:
+    - ../../../../../../encrypt/ex_vit/cifar10/baseline_model/training/run_20231004_164512/output:
+        persist: true
+    - output:
+        persist: true

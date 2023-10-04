@@ -1,0 +1,7 @@
+dvc_sbatch.dvc_commit.*.out
+dvc_sbatch.dvc_commit.*.err
+*.dvc_stage_jobid
+*.dvc_commit_jobid
+*.dvc_cleanup_jobid
+sbatch_dvc_stage_*.sh
+slurm_enqueue_dvc_push_*.sh

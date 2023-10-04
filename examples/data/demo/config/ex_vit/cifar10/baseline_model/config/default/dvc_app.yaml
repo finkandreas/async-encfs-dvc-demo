@@ -1,0 +1,72 @@
+# PyTorch Vision Transformer description for DVC stage generation
+
+app:
+  name: &app_name ex_vit/cifar10/baseline_model  # apps should always be versioned, dataset can be absorbed into model in case of redundancy
+  code_root: &code_root "\\$(git rev-parse --show-toplevel)/examples/ex_vit"  # /src/app
+
+  # defaults for SLURM, can be overriden in merged mappings
+  slurm_defaults: &slurm_defaults
+    # environment configuration in sbatch script before srun (only stage supported)
+    stage_env: |
+      module load daint-gpu
+      module load PyTorch
+      export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
+
+      # Environment variables needed by the NCCL backend for distributed training
+      export NCCL_DEBUG=INFO
+      export NCCL_IB_HCA=ipogif0
+      export NCCL_IB_CUDA_SUPPORT=1
+    dvc:  # sbatch options
+      --cpus-per-task: 24
+      --constraint: mc
+      --time: '4:00:00'
+    all:  # sbatch options
+      --account: csstaff
+
+  stages: # app-specific stages
+    config:
+      type: config_stage
+      script: [*code_root, copy_config.sh]
+      output_config:
+        config_group: &output_config_group "default"
+      extra_command_line_options:
+        --source: [*code_root, "config.yaml"]
+
+
+include:
+  dvc_root: '.dvc_policies/repo/dvc_root.yaml'
+  config_stage: '.dvc_policies/stages/dvc_config.yaml'
+
+# DVC repo configuration with encfs-encryption
+
+host_data:
+  dvc_root: &dvc_root_host ../..  # output of `dvc root`
+  dvc_config: &dvc_config_host config
+  mount:  # relative to dvc_root_host
+    data:
+      type: encfs
+      origin: encrypt
+      default_target: &mount_data_host decrypt  # make sure this is a dvc-repo-specific path if it is absolute
+      custom_target:  # machine-specific
+        - machine: ['daint[\d]+', 'nid[\d]+'] # TODO: Alps
+          target: /tmp/encfs_$(id -u)_async_encfs_dvc  # make sure this is a dvc-repo-specific path if using multiple encfs-repos
+
+# An input stage for configuration files
+# Serves both for data fetched from external sources as well as as a workaround
+# for the missing --file option of dvc add in newer releases
+
+config_stage:
+  # no data dependencies tracked with DVC
+
+  output:  # output data
+    config:
+      stage_data: &output_config [*app_name, config, *output_config_group, output]
+      command_line_options:
+        --dest: *output_config
+
+  dvc: [*output_config, ".."]
+
+original:
+  file: "$(dvc root)/../../ex_vit/23-10-04_16-03-18_daint102_anfink_dvc_app.yaml"  # source of this DVC app stage configuration
+  run_label: "init"  # original run_label used
+

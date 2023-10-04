@@ -1,0 +1,101 @@
+# PyTorch Vision Transformer description for DVC stage generation
+
+app:
+  name: &app_name ex_vit/cifar10/baseline_model  # apps should always be versioned, dataset can be absorbed into model in case of redundancy
+  code_root: &code_root "\\$(git rev-parse --show-toplevel)/examples/ex_vit"  # /src/app
+
+  # defaults for SLURM, can be overriden in merged mappings
+  slurm_defaults: &slurm_defaults
+    # environment configuration in sbatch script before srun (only stage supported)
+    stage_env: |
+      module load daint-gpu
+      module load PyTorch
+      export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
+
+      # Environment variables needed by the NCCL backend for distributed training
+      export NCCL_DEBUG=INFO
+      export NCCL_IB_HCA=ipogif0
+      export NCCL_IB_CUDA_SUPPORT=1
+    dvc:  # sbatch options
+      --cpus-per-task: 24
+      --constraint: mc
+      --time: '4:00:00'
+    all:  # sbatch options
+      --account: csstaff
+
+  stages: # app-specific stages
+    training:
+      type: ml_training_stage
+      script: [*code_root, training.py]
+      input_training: # parameterizes training data dep
+        name: &input_training_app_name in/cifar10
+        stage: &input_training_app_stage original
+      input_test: # parameterizes test data dep
+        name: &input_test_app_name in/cifar10
+        stage: &input_test_app_stage original
+      extra_command_line_options:
+        --dist: ~
+        --dry-run: ~
+        # --no-cuda: ~
+
+      slurm_opts:  # run with SLURM
+        <<: *slurm_defaults
+        stage:  # sbatch options
+          --nodes: 4
+          --ntasks: 4
+          --cpus-per-task: 12
+          --constraint: gpu
+          --time: '12:00:00'
+
+include:
+  dvc_root: '.dvc_policies/repo/dvc_root.yaml'
+  ml_training_stage: '.dvc_policies/stages/dvc_ml_training.yaml'
+
+# DVC repo configuration with encfs-encryption
+
+host_data:
+  dvc_root: &dvc_root_host ../..  # output of `dvc root`
+  dvc_config: &dvc_config_host config
+  mount:  # relative to dvc_root_host
+    data:
+      type: encfs
+      origin: encrypt
+      default_target: &mount_data_host decrypt  # make sure this is a dvc-repo-specific path if it is absolute
+      custom_target:  # machine-specific
+        - machine: ['daint[\d]+', 'nid[\d]+'] # TODO: Alps
+          target: /tmp/encfs_$(id -u)_async_encfs_dvc  # make sure this is a dvc-repo-specific path if using multiple encfs-repos
+
+# A generic ML training stage
+# All values are interpreted as paths relative to the host/container data (encfs) mount point
+# Exercise: implement stage policy for continuing training from a saved checkpoint by adding 
+# another input depedency on saved model (this trains from scratch) 
+
+ml_training_stage:  # stage_data is relative to mount data point
+  input:  # input data dependencies
+    training:  # training data
+      stage_data: &input_training_data [*input_training_app_name, *input_training_app_stage, ".", output]
+      command_line_options:  # for script
+        --training-input: [*input_training_data, ""]
+
+    test:  # test data
+      stage_data: &input_test_data [*input_test_app_name, *input_test_app_stage, ".", output]
+      command_line_options:
+        --test-input: [*input_test_data, ""]
+
+    config:  # hyperparameter config
+      stage_data: &input_config [*app_name, config, "default", output]
+      command_line_options:
+        --config: [*input_config, "config.yaml"]
+
+  output:  # trained model
+    training:
+      stage_data: &output_training [*app_name, training, "run_20231004_164512", output]
+      command_line_options:
+        --training-output: *output_training
+
+  dvc: [*output_training, ".."]  # dvc.yaml storage location
+
+original:
+  file: "$(dvc root)/../../ex_vit/23-10-04_16-04-40_daint102_anfink_dvc_app.yaml"  # source of this DVC app stage configuration
+  run_label: "run_20231004_164512"  # original run_label used
+
