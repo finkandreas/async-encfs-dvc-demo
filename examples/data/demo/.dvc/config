@@ -1,0 +1,9 @@
+[core]
+    autostage = true
+    analytics = false
+    remote = castor
+['remote "castor"']
+    url = s3://async-encfs-dvc-test-002
+    endpointurl = https://object.cscs.ch
+    acl = authenticated-read
+    profile = csstaff

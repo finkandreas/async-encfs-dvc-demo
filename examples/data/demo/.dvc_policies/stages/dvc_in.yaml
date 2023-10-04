@@ -1,0 +1,13 @@
+# An input stage for original data
+# Serves both for data fetched from external sources as well as as a workaround
+# for the missing --file option of dvc add in newer releases
+
+in_stage:
+  # no data dependencies
+  output:  # output data
+    in:
+      stage_data: &output_in [in, *output_dataset_name, original, *output_subset_name, output]
+      command_line_options:
+        --in-output: *output_in
+
+  dvc: [*output_in, ".."]
